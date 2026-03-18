@@ -78,14 +78,6 @@ logs-archive.zip   0.800   819.20   C:\Logs
 | `FullPath` | Full file path |
 | `LastWriteTime` | Last modification date |
 
-## Owners
-
-- [stesc](https://github.com/stesc)
-
-## Copyright
-
-(c) 2026 stesc. All rights reserved.
-
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
