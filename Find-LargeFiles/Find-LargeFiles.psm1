@@ -1,10 +1,10 @@
-function Find-LargeFiles {
+function Find-LargeFile {
     <#
     .SYNOPSIS
         Finds the largest files in a directory and displays them in a formatted table.
 
     .DESCRIPTION
-        The Find-LargeFiles function scans a specified directory (recursively by default)
+        The Find-LargeFile function scans a specified directory (recursively by default)
         and returns the top N largest files. Results include file size in GB and MB,
         along with the source path where each file was found.
 
@@ -20,41 +20,49 @@ function Find-LargeFiles {
     .PARAMETER MinimumSizeMB
         Filters results to only include files larger than the specified size in megabytes.
 
+    .PARAMETER Force
+        Includes hidden and system files in the search.
+
     .EXAMPLE
-        Find-LargeFiles
+        Find-LargeFile
 
         Finds the 10 largest files in the current directory and all subdirectories.
 
     .EXAMPLE
-        Find-LargeFiles -Path "C:\Users" -Top 20
+        Find-LargeFile -Path "C:\Users" -Top 20
 
         Finds the 20 largest files under C:\Users.
 
     .EXAMPLE
-        Find-LargeFiles -Path "D:\Data" -MinimumSizeMB 500
+        Find-LargeFile -Path "D:\Data" -MinimumSizeMB 500
 
         Finds the 10 largest files under D:\Data that are at least 500 MB.
 
     .EXAMPLE
-        Find-LargeFiles -Path "C:\" -Top 5 -Recurse:$false
+        Find-LargeFile -Path "C:\" -Top 5 -Recurse:$false
 
         Finds the 5 largest files in the root of C:\ without scanning subdirectories.
 
+    .EXAMPLE
+        Find-LargeFile -Path "C:\Users" -Force
+
+        Finds the 10 largest files under C:\Users, including hidden and system files.
+
     .INPUTS
         System.String
-            You can pipe a directory path to Find-LargeFiles.
+            You can pipe a directory path to Find-LargeFile.
 
     .OUTPUTS
         System.Management.Automation.PSCustomObject
             Returns objects with FileName, SizeGB, SizeMB, and SourceDirectory properties.
 
     .NOTES
-        Author: stesc
-        Version: 1.0.0
+        Author: stescobedo
+        Version: 1.1.0
         Requires PowerShell 5.1 or later.
 
     .LINK
-        https://github.com/stesc/FindLargeFiles
+        https://github.com/stescobedo92/FindLargeFiles
     #>
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
@@ -66,7 +74,7 @@ function Find-LargeFiles {
             HelpMessage = 'Directory path to search for large files.'
         )]
         [ValidateScript({
-            if (-not (Test-Path -Path $_ -PathType Container)) {
+            if (-not (Test-Path -LiteralPath $_ -PathType Container)) {
                 throw "The path '$_' does not exist or is not a directory."
             }
             return $true
@@ -79,11 +87,14 @@ function Find-LargeFiles {
         [int]$Top = 10,
 
         [Parameter(HelpMessage = 'Search subdirectories recursively.')]
-        [switch]$Recurse = $true,
+        [switch]$Recurse,
 
         [Parameter(HelpMessage = 'Minimum file size in megabytes to include in results.')]
         [ValidateRange(0, [double]::MaxValue)]
-        [double]$MinimumSizeMB = 0
+        [double]$MinimumSizeMB = 0,
+
+        [Parameter(HelpMessage = 'Include hidden and system files in the search.')]
+        [switch]$Force
     )
 
     begin {
@@ -91,18 +102,24 @@ function Find-LargeFiles {
     }
 
     process {
-        $resolvedPath = Resolve-Path -Path $Path -ErrorAction Stop
+        $resolvedPath = Resolve-Path -LiteralPath $Path -ErrorAction Stop
 
         Write-Verbose "Searching in: $resolvedPath"
 
         $getChildItemParams = @{
-            Path        = $resolvedPath
+            LiteralPath = $resolvedPath.ProviderPath
             File        = $true
             ErrorAction = 'SilentlyContinue'
         }
 
-        if ($Recurse) {
+        $shouldRecurse = -not $PSBoundParameters.ContainsKey('Recurse') -or $Recurse.IsPresent
+
+        if ($shouldRecurse) {
             $getChildItemParams['Recurse'] = $true
+        }
+
+        if ($Force) {
+            $getChildItemParams['Force'] = $true
         }
 
         $minimumSizeBytes = $MinimumSizeMB * 1MB
@@ -113,7 +130,7 @@ function Find-LargeFiles {
             Select-Object -First $Top
 
         if (-not $files) {
-            Write-Warning "No files found in '$resolvedPath'."
+            Write-Warning "No files found in '$($resolvedPath.ProviderPath)' that match the current filters."
             return
         }
 
@@ -135,14 +152,9 @@ function Find-LargeFiles {
     }
 }
 
-# Define default display properties
 $defaultDisplaySet = 'FileName', 'SizeGB', 'SizeMB', 'SourceDirectory'
-$defaultDisplayPropertySet = New-Object System.Management.Automation.PSPropertySet(
-    'DefaultDisplayPropertySet',
-    [string[]]$defaultDisplaySet
-)
-$PSStandardMembers = [System.Management.Automation.PSMemberInfo[]]@($defaultDisplayPropertySet)
-
 Update-TypeData -TypeName 'FindLargeFiles.Result' -DefaultDisplayPropertySet $defaultDisplaySet -Force
 
-Export-ModuleMember -Function Find-LargeFiles
+Set-Alias -Name Find-LargeFiles -Value Find-LargeFile
+
+Export-ModuleMember -Function Find-LargeFile -Alias Find-LargeFiles

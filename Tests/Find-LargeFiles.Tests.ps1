@@ -31,9 +31,20 @@ Describe 'Find-LargeFiles' {
         $subFilePath = Join-Path -Path $subDir -ChildPath 'nested.txt'
         $bytes = New-Object byte[] 5MB
         [System.IO.File]::WriteAllBytes($subFilePath, $bytes)
+
+        $hiddenFilePath = Join-Path -Path $testRoot -ChildPath 'hidden-large.bin'
+        $bytes = New-Object byte[] 20MB
+        [System.IO.File]::WriteAllBytes($hiddenFilePath, $bytes)
+        $hiddenFile = Get-Item -LiteralPath $hiddenFilePath
+        $hiddenFile.Attributes = $hiddenFile.Attributes -bor [System.IO.FileAttributes]::Hidden
     }
 
     Context 'Default behavior' {
+        It 'Exports the canonical cmdlet and compatibility alias' {
+            Get-Command -Name Find-LargeFile -CommandType Function | Should -Not -BeNullOrEmpty
+            Get-Command -Name Find-LargeFiles -CommandType Alias | Should -Not -BeNullOrEmpty
+        }
+
         It 'Returns files sorted by size descending' {
             $result = Find-LargeFiles -Path $testRoot
             $result[0].FileName | Should -Be 'biggest.txt'
@@ -76,6 +87,18 @@ Describe 'Find-LargeFiles' {
             $result | ForEach-Object {
                 $_.SizeMB | Should -BeGreaterOrEqual 5
             }
+        }
+    }
+
+    Context 'Force parameter' {
+        It 'Excludes hidden files by default' {
+            $result = Find-LargeFiles -Path $testRoot
+            $result.FileName | Should -Not -Contain 'hidden-large.bin'
+        }
+
+        It 'Includes hidden files when Force is used' {
+            $result = Find-LargeFiles -Path $testRoot -Force
+            $result.FileName | Should -Contain 'hidden-large.bin'
         }
     }
 

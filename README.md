@@ -1,7 +1,14 @@
 # Find-LargeFiles
 
+[![CI](https://github.com/stescobedo92/FindLargeFiles/actions/workflows/ci.yml/badge.svg)](https://github.com/stescobedo92/FindLargeFiles/actions/workflows/ci.yml)
+[![Licencia: MIT](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
+[![Publish Version](https://img.shields.io/powershellgallery/v/Find-LargeFiles?label=Publish%20Version)](https://www.powershellgallery.com/packages/Find-LargeFiles)
+[![Release](https://img.shields.io/github/v/release/stescobedo92/FindLargeFiles?label=Release)](https://github.com/stescobedo92/FindLargeFiles/releases)
+
 Find-LargeFiles is a PowerShell module that scans a directory for the largest files and displays them in a formatted table with size in GB, MB, and the source path where they were found.
 It is useful for disk space analysis, storage cleanup, and identifying space-consuming files across your file system.
+
+The canonical cmdlet is `Find-LargeFile`. The previous `Find-LargeFiles` command is still exported as a compatibility alias.
 
 ## Minimum PowerShell version
 
@@ -26,25 +33,31 @@ Install-PSResource -Name Find-LargeFiles
 ### Find the 10 largest files in the current directory
 
 ```powershell
-Find-LargeFiles
+Find-LargeFile
 ```
 
 ### Search a specific path and return the top 20
 
 ```powershell
-Find-LargeFiles -Path "C:\Users" -Top 20
+Find-LargeFile -Path "C:\Users" -Top 20
 ```
 
 ### Only files larger than 500 MB
 
 ```powershell
-Find-LargeFiles -Path "D:\" -MinimumSizeMB 500
+Find-LargeFile -Path "D:\" -MinimumSizeMB 500
 ```
 
 ### Search without recursion
 
 ```powershell
-Find-LargeFiles -Path "C:\" -Top 5 -Recurse:$false
+Find-LargeFile -Path "C:\" -Top 5 -Recurse:$false
+```
+
+### Include hidden and system files
+
+```powershell
+Find-LargeFile -Path "C:\Users" -Force
 ```
 
 ### Sample Output
@@ -66,6 +79,7 @@ logs-archive.zip   0.800   819.20   C:\Logs
 | `-Top` | Int | 10 | Number of largest files to return |
 | `-Recurse` | Switch | `$true` | Include subdirectories |
 | `-MinimumSizeMB` | Double | 0 | Minimum file size filter in MB |
+| `-Force` | Switch | `$false` | Include hidden and system files |
 
 ## Output Properties
 
@@ -80,11 +94,11 @@ logs-archive.zip   0.800   819.20   C:\Logs
 
 ## Owners
 
-- [stesc](https://github.com/stesc)
+- [stescobedo](https://github.com/stescobedo92)
 
 ## Copyright
 
-(c) 2026 stesc. All rights reserved.
+(c) 2026 stescobedo. All rights reserved.
 
 ## License
 

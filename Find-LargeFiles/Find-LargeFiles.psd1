@@ -5,7 +5,7 @@
     RootModule        = 'Find-LargeFiles.psm1'
 
     # Version number of this module
-    ModuleVersion     = '1.0.0'
+    ModuleVersion     = '1.1.0'
 
     # Supported PSEditions
     CompatiblePSEditions = @('Desktop', 'Core')
@@ -14,13 +14,13 @@
     GUID              = 'a3f7b2c1-4d8e-4f6a-9b1c-3e5d7f8a2b4c'
 
     # Author of this module
-    Author            = 'stesc'
+    Author            = 'stescobedo'
 
     # Company or vendor of this module
-    CompanyName       = 'stesc'
+    CompanyName       = 'stescobedo'
 
     # Copyright statement for this module
-    Copyright         = '(c) 2026 stesc. All rights reserved.'
+    Copyright         = '(c) 2026 stescobedo. All rights reserved.'
 
     # Description of the functionality provided by this module
     Description       = 'Finds the largest files in a directory and displays them in a formatted table with size in GB, MB, and source path. Useful for disk space analysis and cleanup.'
@@ -29,7 +29,7 @@
     PowerShellVersion = '5.1'
 
     # Functions to export from this module
-    FunctionsToExport = @('Find-LargeFiles')
+    FunctionsToExport = @('Find-LargeFile')
 
     # Cmdlets to export from this module
     CmdletsToExport   = @()
@@ -38,7 +38,7 @@
     VariablesToExport  = @()
 
     # Aliases to export from this module
-    AliasesToExport    = @()
+    AliasesToExport    = @('Find-LargeFiles')
 
     # Private data to pass to the module specified in RootModule
     PrivateData       = @{
@@ -47,13 +47,13 @@
             Tags         = @('Files', 'DiskSpace', 'LargeFiles', 'Storage', 'Cleanup', 'Utility', 'FileSystem')
 
             # A URL to the license for this module
-            LicenseUri   = 'https://github.com/stesc/FindLargeFiles/blob/main/LICENSE'
+            LicenseUri   = 'https://github.com/stescobedo92/FindLargeFiles/blob/master/LICENSE'
 
             # A URL to the main website for this project
-            ProjectUri   = 'https://github.com/stesc/FindLargeFiles'
+            ProjectUri   = 'https://github.com/stescobedo92/FindLargeFiles'
 
             # ReleaseNotes of this module
-            ReleaseNotes = 'Initial release of Find-LargeFiles. Scans directories for the largest files and outputs a table with size in GB, MB, and source directory.'
+            ReleaseNotes = 'Adds Find-LargeFile as the canonical cmdlet, keeps Find-LargeFiles as a compatibility alias, adds hidden/system file discovery with -Force, improves path handling, and updates CI/CD publishing metadata.'
         }
     }
 }
