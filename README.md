@@ -92,14 +92,6 @@ logs-archive.zip   0.800   819.20   C:\Logs
 | `FullPath` | Full file path |
 | `LastWriteTime` | Last modification date |
 
-## Owners
-
-- [stescobedo](https://github.com/stescobedo92)
-
-## Copyright
-
-(c) 2026 stescobedo. All rights reserved.
-
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
