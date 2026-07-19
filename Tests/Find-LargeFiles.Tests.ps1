@@ -37,6 +37,33 @@ Describe 'Find-LargeFiles' {
         [System.IO.File]::WriteAllBytes($hiddenFilePath, $bytes)
         $hiddenFile = Get-Item -LiteralPath $hiddenFilePath
         $hiddenFile.Attributes = $hiddenFile.Attributes -bor [System.IO.FileAttributes]::Hidden
+
+        # Extra fixtures for Include / Extension / Exclude / Depth / date filters
+        $nodeModules = Join-Path -Path $testRoot -ChildPath 'node_modules'
+        New-Item -Path $nodeModules -ItemType Directory -Force | Out-Null
+        $excludedPath = Join-Path -Path $nodeModules -ChildPath 'vendor.pack'
+        $bytes = New-Object byte[] 30MB
+        [System.IO.File]::WriteAllBytes($excludedPath, $bytes)
+
+        $deepDir = Join-Path -Path $testRoot -ChildPath 'Level1\Level2\Level3'
+        New-Item -Path $deepDir -ItemType Directory -Force | Out-Null
+        $deepFilePath = Join-Path -Path $deepDir -ChildPath 'deep.bin'
+        $bytes = New-Object byte[] 8MB
+        [System.IO.File]::WriteAllBytes($deepFilePath, $bytes)
+
+        $isoPath = Join-Path -Path $testRoot -ChildPath 'installer.iso'
+        $bytes = New-Object byte[] 12MB
+        [System.IO.File]::WriteAllBytes($isoPath, $bytes)
+
+        $oldFilePath = Join-Path -Path $testRoot -ChildPath 'old-archive.bak'
+        $bytes = New-Object byte[] 15MB
+        [System.IO.File]::WriteAllBytes($oldFilePath, $bytes)
+        (Get-Item -LiteralPath $oldFilePath).LastWriteTime = (Get-Date).AddDays(-60)
+
+        $newFilePath = Join-Path -Path $testRoot -ChildPath 'fresh-data.bak'
+        $bytes = New-Object byte[] 14MB
+        [System.IO.File]::WriteAllBytes($newFilePath, $bytes)
+        (Get-Item -LiteralPath $newFilePath).LastWriteTime = Get-Date
     }
 
     Context 'Default behavior' {
@@ -48,12 +75,13 @@ Describe 'Find-LargeFiles' {
         It 'Returns files sorted by size descending' {
             $result = Find-LargeFiles -Path $testRoot
             $result[0].FileName | Should -Be 'biggest.txt'
-            $result[1].FileName | Should -Be 'bigger.txt'
+            $result[1].FileName | Should -Be 'vendor.pack'
         }
 
         It 'Returns the correct number of files' {
-            $result = Find-LargeFiles -Path $testRoot
-            $result.Count | Should -Be 6
+            $result = Find-LargeFiles -Path $testRoot -Top 100
+            # 5 root txt + nested + iso + deep + 2 bak + vendor.pack (hidden excluded)
+            $result.Count | Should -Be 11
         }
 
         It 'Includes files from subdirectories by default' {
@@ -102,6 +130,65 @@ Describe 'Find-LargeFiles' {
         }
     }
 
+    Context 'Include and Extension parameters' {
+        It 'Filters by Include wildcard patterns' {
+            $result = Find-LargeFile -Path $testRoot -Include '*.iso'
+            $result.Count | Should -Be 1
+            $result[0].FileName | Should -Be 'installer.iso'
+        }
+
+        It 'Filters by Extension with or without a leading dot' {
+            $result = Find-LargeFile -Path $testRoot -Extension bak, .iso
+            $result.FileName | Should -Contain 'old-archive.bak'
+            $result.FileName | Should -Contain 'fresh-data.bak'
+            $result.FileName | Should -Contain 'installer.iso'
+            $result.FileName | Should -Not -Contain 'biggest.txt'
+        }
+    }
+
+    Context 'Exclude parameter' {
+        It 'Skips files matching Exclude path wildcards' {
+            $result = Find-LargeFile -Path $testRoot -Exclude '*\node_modules\*'
+            $result.FileName | Should -Not -Contain 'vendor.pack'
+            $result.FileName | Should -Contain 'biggest.txt'
+        }
+    }
+
+    Context 'Depth parameter' {
+        It 'Limits recursion depth' {
+            $result = Find-LargeFile -Path $testRoot -Depth 1
+            $result.FileName | Should -Contain 'nested.txt'
+            $result.FileName | Should -Not -Contain 'deep.bin'
+        }
+
+        It 'Includes deeper files when Depth allows it' {
+            $result = Find-LargeFile -Path $testRoot -Depth 3
+            $result.FileName | Should -Contain 'deep.bin'
+        }
+    }
+
+    Context 'Date filters' {
+        It 'Returns only files older than OlderThan' {
+            $result = Find-LargeFile -Path $testRoot -Extension bak -OlderThan (Get-Date).AddDays(-30)
+            $result.FileName | Should -Contain 'old-archive.bak'
+            $result.FileName | Should -Not -Contain 'fresh-data.bak'
+        }
+
+        It 'Returns only files newer than NewerThan' {
+            $result = Find-LargeFile -Path $testRoot -Extension bak -NewerThan (Get-Date).AddDays(-7)
+            $result.FileName | Should -Contain 'fresh-data.bak'
+            $result.FileName | Should -Not -Contain 'old-archive.bak'
+        }
+
+        It 'Throws when NewerThan is not earlier than OlderThan' {
+            {
+                Find-LargeFile -Path $testRoot `
+                    -NewerThan (Get-Date) `
+                    -OlderThan (Get-Date).AddDays(-1)
+            } | Should -Throw
+        }
+    }
+
     Context 'Output properties' {
         It 'Returns objects with expected properties' {
             $result = Find-LargeFiles -Path $testRoot -Top 1
@@ -111,6 +198,7 @@ Describe 'Find-LargeFiles' {
             $result | Get-Member -Name 'SourceDirectory' | Should -Not -BeNullOrEmpty
             $result | Get-Member -Name 'FullPath' | Should -Not -BeNullOrEmpty
             $result | Get-Member -Name 'LastWriteTime' | Should -Not -BeNullOrEmpty
+            $result | Get-Member -Name 'Extension' | Should -Not -BeNullOrEmpty
         }
 
         It 'Calculates SizeMB correctly' {

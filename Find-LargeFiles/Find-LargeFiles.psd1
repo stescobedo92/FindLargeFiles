@@ -5,7 +5,7 @@
     RootModule        = 'Find-LargeFiles.psm1'
 
     # Version number of this module
-    ModuleVersion     = '1.1.0'
+    ModuleVersion     = '1.2.0'
 
     # Supported PSEditions
     CompatiblePSEditions = @('Desktop', 'Core')
@@ -53,7 +53,7 @@
             ProjectUri   = 'https://github.com/stescobedo92/FindLargeFiles'
 
             # ReleaseNotes of this module
-            ReleaseNotes = 'Adds Find-LargeFile as the canonical cmdlet, keeps Find-LargeFiles as a compatibility alias, adds hidden/system file discovery with -Force, improves path handling, and updates CI/CD publishing metadata.'
+            ReleaseNotes = 'Adds Include/Extension/Exclude filters, Depth-limited recursion, OlderThan/NewerThan date filters, scan progress via Write-Progress, and an Extension property on result objects.'
         }
     }
 }

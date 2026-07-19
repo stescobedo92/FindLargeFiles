@@ -60,6 +60,24 @@ Find-LargeFile -Path "C:\" -Top 5 -Recurse:$false
 Find-LargeFile -Path "C:\Users" -Force
 ```
 
+### Filter by extension
+
+```powershell
+Find-LargeFile -Path "C:\Repos" -Extension iso, vhdx, bak -Top 15
+```
+
+### Exclude noisy directories
+
+```powershell
+Find-LargeFile -Path "C:\Dev" -Exclude '*\node_modules\*', '*\.git\*' -Depth 4
+```
+
+### Find large files that have not changed recently
+
+```powershell
+Find-LargeFile -Path "C:\Logs" -OlderThan (Get-Date).AddDays(-30) -MinimumSizeMB 100
+```
+
 ### Sample Output
 
 ```
@@ -78,8 +96,16 @@ logs-archive.zip   0.800   819.20   C:\Logs
 | `-Path` | String | Current directory | Root directory to search |
 | `-Top` | Int | 10 | Number of largest files to return |
 | `-Recurse` | Switch | `$true` | Include subdirectories |
+| `-Depth` | Int | (unlimited) | Maximum subdirectory levels to search |
 | `-MinimumSizeMB` | Double | 0 | Minimum file size filter in MB |
+| `-Include` | String[] | | Wildcard patterns matched against file names (`*.iso`) |
+| `-Extension` | String[] | | File extensions to include (`iso`, `.bak`) |
+| `-Exclude` | String[] | | Wildcard patterns matched against full paths |
+| `-OlderThan` | DateTime | | Only files with `LastWriteTime` older than this value |
+| `-NewerThan` | DateTime | | Only files with `LastWriteTime` newer than this value |
 | `-Force` | Switch | `$false` | Include hidden and system files |
+
+During long scans, progress is reported with `Write-Progress`.
 
 ## Output Properties
 
@@ -91,6 +117,7 @@ logs-archive.zip   0.800   819.20   C:\Logs
 | `SourceDirectory` | Directory where the file is located |
 | `FullPath` | Full file path |
 | `LastWriteTime` | Last modification date |
+| `Extension` | File extension (including the leading dot) |
 
 ## License
 
